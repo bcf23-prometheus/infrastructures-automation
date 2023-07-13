@@ -1,0 +1,9 @@
+---
+- hosts: control_node_1
+  become: yes
+
+  tasks:
+    - name: initialize swarm
+      command: docker swarm init \
+        --advertise-addr {{ control_plane.control_node_1.ip.external }}:2377 \
+        --listen-addr {{ control_plane.control_node_1.ip.internal }}:2377

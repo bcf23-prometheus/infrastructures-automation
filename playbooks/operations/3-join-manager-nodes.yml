@@ -1,0 +1,40 @@
+---
+- hosts: control_plane
+  become: yes
+
+  tasks:
+    - name: get the join command token from the first control node
+      shell: docker swarm join-token manager | grep -oP '(?<=--token\s)[^[:space:]]+'
+      args:
+        chdir: /usr/bin/
+      when: inventory_hostname == "control_node_1"
+      register: join_token
+
+    - name: get the join command address from the first control node
+      shell: docker swarm join-token worker | grep -oP '(?<=\s)[^[:space:]]+:\d+'
+      args:
+        chdir: /usr/bin/
+      when: inventory_hostname == "control_node_1"
+      register: join_address
+    
+    - name: debug join token
+      debug:
+        msg: "{{ hostvars['control_node_1']['join_token'].stdout }}"
+    
+    - name: debug join address
+      debug:
+        msg: "{{ hostvars['control_node_1']['join_address'].stdout }}"
+
+    - name: debug host ip
+      debug:
+        msg: "{{ hostvars[inventory_hostname]['control_plane'][inventory_hostname]['ip']['internal'] }}"
+      when: inventory_hostname != "control_node_1"
+
+    - name: join the swarm
+      community.docker.docker_swarm:
+        state: join
+        advertise_addr: "{{ hostvars[inventory_hostname]['control_plane'][inventory_hostname]['ip']['external'] }}:2377"
+        listen_addr: "{{ hostvars[inventory_hostname]['control_plane'][inventory_hostname]['ip']['internal'] }}:2377"
+        join_token: "{{ hostvars['control_node_1']['join_token'].stdout }}"
+        remote_addrs: [ "{{ hostvars['control_node_1']['join_address'].stdout }}" ]
+      when: inventory_hostname != "control_node_1"
