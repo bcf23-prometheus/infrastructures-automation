@@ -40,7 +40,7 @@
 
     - name: Download Jenkins Debian package
       get_url:
-        url: https://pkg.jenkins.io/debian-stable/binary/jenkins_2.303.2_all.deb
+        url: https://pkg.jenkins.io/debian-stable/binary/jenkins_2.361.1_all.deb
         dest: /tmp/jenkins.deb
 
     - name: Install Jenkins dependencies
