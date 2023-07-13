@@ -38,28 +38,21 @@
         name: adoptopenjdk-11-hotspot
         state: present
 
-    - name: Download Jenkins GPG key
+    - name: Download Jenkins Debian package
       get_url:
-        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
-        dest: /tmp/jenkins.io.key
+        url: https://pkg.jenkins.io/debian-stable/binary/jenkins_2.303.2_all.deb
+        dest: /tmp/jenkins.deb
 
-    - name: Add Jenkins GPG key
-      shell: sudo apt-key add /tmp/jenkins.io.key
-      changed_when: false
-
-    - name: Add Jenkins APT repository
-      lineinfile:
-        path: /etc/apt/sources.list.d/jenkins.list
-        line: "deb https://pkg.jenkins.io/debian-stable binary/"
-        create: yes
-
-    - name: check for updates
+    - name: Install Jenkins dependencies
       apt:
-        update_cache: yes
-        cache_valid_time: 3600
-    - name: Install Jenkins
+        name:
+          - default-jre
+          - procps
+        state: present
+
+    - name: Install Jenkins package
       apt:
-        name: jenkins
+        deb: /tmp/jenkins.deb
         state: present
 
     - name: Start Jenkins service
