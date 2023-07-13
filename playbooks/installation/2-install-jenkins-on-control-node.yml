@@ -11,21 +11,52 @@
       file:
         state: absent
         path: "/var/lib/dpkg/lock"
-    - name: Install Java
+
+    - name: Install OpenJDK dependencies
       apt:
-        name: openjdk-8-jdk
+        name:
+          - ca-certificates
+          - apt-transport-https
+          - dirmngr
+          - gnupg
+          - software-properties-common
         state: present
-
-    - name: Add Jenkins repository key
+    - name: Add OpenJDK APT key
       apt_key:
-        url: https://pkg.jenkins.io/debian/jenkins.io.key
+        url: https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public
         state: present
-
-    - name: Add Jenkins repository
+    - name: Add OpenJDK repository
       apt_repository:
-        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        repo: deb https://adoptopenjdk.jfrog.io/adoptopenjdk/deb bullseye main
+        state: present
+    - name: check for updates
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Install OpenJDK
+      apt:
+        name: adoptopenjdk-11-hotspot
         state: present
 
+    - name: Download Jenkins GPG key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        dest: /tmp/jenkins.io.key
+
+    - name: Add Jenkins GPG key
+      shell: sudo apt-key add /tmp/jenkins.io.key
+      changed_when: false
+
+    - name: Add Jenkins APT repository
+      lineinfile:
+        path: /etc/apt/sources.list.d/jenkins.list
+        line: "deb https://pkg.jenkins.io/debian-stable binary/"
+        create: yes
+
+    - name: check for updates
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
     - name: Install Jenkins
       apt:
         name: jenkins
